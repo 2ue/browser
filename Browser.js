@@ -1,6 +1,7 @@
 /**
- * 浏览器解析，浏览器、Node.js皆可
- * https://github.com/mumuy/browser
+ * 支持各类规范，浏览器解析，浏览器、Node.js皆可
+ * forked: https://github.com/onlyling/browser
+ * current version: https://github.com/2ue/browser
  */
 
 
@@ -17,28 +18,10 @@
     }
 }(this, function () {
 
-    // window ?
-    var _window
-    try {
-        _window = window
-    } catch (e) {
-        _window = {}
-    }
+    var _window = window || {};
+    var _navigator = navigator || {};
 
-    return function (userAgent, acceptLanguage) {
-
-        // navigator ?
-        // var g = (navigator.browserLanguage || navigator.language);
-        var _navigator
-        try {
-            _navigator = navigator
-        } catch (e) {
-            _navigator = {
-                userAgent: userAgent,
-                browserLanguage: acceptLanguage
-            }
-        }
-
+    return function (userAgent) {
         var u = userAgent || _navigator.userAgent;
         var _this = this;
 
@@ -112,14 +95,14 @@
             device: ['Mobile', 'Tablet']
         };
         _this.device = 'PC';
+        //获取语言信息
         _this.language = (function () {
             var g = (_navigator.browserLanguage || _navigator.language);
-            var arr = g.split('-');
-            if (arr[1]) {
-                arr[1] = arr[1].toUpperCase();
-            }
-            return arr.join('_');
+            return g.replace(/\-([a-zA-z]*)$/, function ($1, $2) {
+                return '_' + $2.toUpperCase();
+            });
         })();
+        //获取基础信息
         for (var s in hash) {
             for (var i = 0; i < hash[s].length; i++) {
                 var value = hash[s][i];
@@ -161,13 +144,6 @@
             },
             'WebOS': function () {
                 return u.replace(/^.*hpwOS\/([\d.]+);.*$/, '$1');
-            }
-        }
-        _this.osVersion = '';
-        if (osVersion[_this.os]) {
-            _this.osVersion = osVersion[_this.os]();
-            if (_this.osVersion == u) {
-                _this.osVersion = '';
             }
         }
         //浏览器版本信息
@@ -260,13 +236,12 @@
                 return u.replace(/^.*IqiyiVersion\/([\d.]+).*$/, '$1');
             }
         };
-        _this.version = '';
-        if (version[_this.browser]) {
-            _this.version = version[_this.browser]();
-            if (_this.version == u) {
-                _this.version = '';
-            }
-        }
+
+        //获取系统和浏览器版本
+        var getOsVersion = osVersion[_this.os], getVersion = version[_this.browser];
+        _this.osVersion = !getOsVersion || getOsVersion() == u ? '' : getOsVersion();
+        _this.version = !getVersion || getVersion() == u ? '' : getVersion();
+
         //修正
         if (_this.browser == 'Edge') {
             _this.engine = 'EdgeHTML';
